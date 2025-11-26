@@ -1,10 +1,14 @@
-import aiohttp
 import asyncio
+import logging
 import os
+import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Tuple, Optional
-from dataclasses import dataclass
-import time
+
+import aiohttp
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -73,7 +77,7 @@ class AsyncDownloader:
 
                 os.rename(downloading_save_path, save_path)
                 elapsed_time = time.time() - start_time
-                print(f"下载完成: {save_path} ({file_size} bytes, 耗时: {elapsed_time:.2f}s)")
+                logger.info(f"下载完成: {save_path} ({file_size} bytes, 耗时: {elapsed_time:.2f}s)")
 
                 return DownloadResult(
                     id=id_str,
@@ -87,7 +91,7 @@ class AsyncDownloader:
         except Exception as e:
             elapsed_time = time.time() - start_time
             error_msg = f"下载失败 {url}: {str(e)}"
-            print(error_msg)
+            logger.error(error_msg)
 
             # 删除可能已创建的不完整文件
             if os.path.exists(save_path):
@@ -168,23 +172,23 @@ class AsyncDownloader:
             print("没有下载任务")
             return
 
-        print("\n" + "=" * 50)
-        print("下载摘要")
-        print("=" * 50)
-        print(f"总任务数: {stats['total_tasks']}")
-        print(f"成功: {stats['successful']}")
-        print(f"失败: {stats['failed']}")
-        print(f"成功率: {stats['success_rate']:.1%}")
-        print(f"总大小: {stats['total_size'] / 1024 / 1024:.2f} MB")
-        print(f"平均速度: {stats['average_speed'] / 1024:.2f} KB/s")
-        print(f"总耗时: {stats['total_time']:.2f} 秒")
+        logger.info("\n" + "=" * 50)
+        logger.info("下载摘要")
+        logger.info("=" * 50)
+        logger.info(f"总任务数: {stats['total_tasks']}")
+        logger.info(f"成功: {stats['successful']}")
+        logger.info(f"失败: {stats['failed']}")
+        logger.info(f"成功率: {stats['success_rate']:.1%}")
+        logger.info(f"总大小: {stats['total_size'] / 1024 / 1024:.2f} MB")
+        logger.info(f"平均速度: {stats['average_speed'] / 1024:.2f} KB/s")
+        logger.info(f"总耗时: {stats['total_time']:.2f} 秒")
 
         # 打印失败的任务
         failed_tasks = [r for r in self.results if not r.success]
         if failed_tasks:
-            print("\n失败任务:")
+            logger.error("\n失败任务:")
             for result in failed_tasks:
-                print(f"  - {result.url} -> {result.error}")
+                logger.error(f"  - {result.url} -> {result.error}")
 
 
 # 使用示例
@@ -198,7 +202,7 @@ async def main():
     ]
 
     # 执行下载
-    print("开始下载...")
+    logger.info("开始下载...")
     results = await downloader.download(download_tasks)
 
     # 打印统计信息

@@ -1,15 +1,16 @@
 import json
+import logging
 from typing import Tuple, Dict, Any
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
 import requests
 from DrissionPage import Chromium, ChromiumOptions
 
+from config import Config
 from twitter_entitys import TwitterMedia
 from util import get_nested_value_expr, get_nested_value_expr_filter
 
-from config import Config
-
+logger = logging.getLogger(__name__)
 
 def create_twitter_browser():
     co = ChromiumOptions()
@@ -33,7 +34,7 @@ def parse_twitter_media_entity(body) -> Tuple[list[TwitterMedia], str]:
     entries = get_nested_value_expr(data, entries_ex)
 
     if not entries or len(entries) == 0:
-        print('No twitter media entries found')
+        logger.info('No twitter media entries found')
 
     result = []
     cursor = ''  # 末端游标
@@ -102,7 +103,7 @@ def parse_twitter_media_entity(body) -> Tuple[list[TwitterMedia], str]:
                         result.append(twitter_media)
 
             if not medias or len(medias) == 0:
-                print('No twitter medias entity found')
+                logger.info('No twitter medias entity found')
 
             if medias is not None and len(medias) > 0:
                 for media in medias:
@@ -124,7 +125,7 @@ def parse_twitter_media_entity(body) -> Tuple[list[TwitterMedia], str]:
                     filter_tw_type = ['photo']
                     if tw_type not in filter_tw_type:
                         if not variants or len(variants) == 0:
-                            print('No twitter media variants found')
+                            logger.info('No twitter media variants found')
 
                     if variants is not None and len(variants) > 0:
                         max_bitrate = 0
@@ -137,11 +138,11 @@ def parse_twitter_media_entity(body) -> Tuple[list[TwitterMedia], str]:
                                     twitter_media.url = variant['url']
                     result.append(twitter_media)
     if len(result) == 0:
-        print(f'size is 0 cursor: {cursor}')
+        logger.info(f'size is 0 cursor: {cursor}')
     if len(result) < 20:
-        print(f'size < 20 size is {len(result)} cursor: {cursor}')
+        logger.info(f'size < 20 size is {len(result)} cursor: {cursor}')
     if len(result) > 20:
-        print(f'size > 20 size is {len(result)} cursor: {cursor}')
+        logger.info(f'size > 20 size is {len(result)} cursor: {cursor}')
     return result, cursor
 
 

@@ -1,7 +1,11 @@
+import logging
+import os
+
 import webdav
 from webdav import OperationFailed
-import os
 from config import Config
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -23,10 +27,10 @@ class WebdavManager:
         # 留个代办，需要手动创建文件目录
         remote_path = os.path.join(self.root_dir, remote_path)
         if safe and self.webdav_client.exists(remote_path):
-            print(f'File {remote_path} already exists')
+            logger.info(f'File {remote_path} already exists')
             return str(remote_path)
         self.webdav_client.upload(local_path_or_fileobj, remote_path)
-        print(f'File {remote_path} uploaded')
+        logger.info(f'File {remote_path} uploaded')
         return str(remote_path)
 
     def ls(self, dir_path: str):

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Dict
 
 from dacite import from_dict
@@ -9,6 +10,7 @@ from mongo_manager import connect_twitter_db
 from twitter_entitys import TwitterMedia
 from util import URLFileInfo
 
+logger = logging.getLogger(__name__)
 
 class TwitterManager:
 
@@ -62,9 +64,9 @@ class TwitterManager:
         try:
             self.twitter_media_collection.insert_one(media_dict)
         except DuplicateKeyError as e:
-            print(f'duplicate key {e.details['keyValue']['id_str']}')
+            logger.error(f'duplicate key {e.details['keyValue']['id_str']}')
             return
-        print(f'ID为: {next_id} 插入数据库')
+        logger.info(f'ID为: {next_id} 插入数据库')
 
     def save_twitter_media_batch(self, tw_media_batch: list[TwitterMedia]):
         if tw_media_batch is None or len(tw_media_batch) == 0:

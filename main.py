@@ -4,6 +4,7 @@ import os
 import shutil
 import threading
 import time
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
@@ -17,9 +18,24 @@ from twitter_page_spider import TwitterPageSpider
 from util import find_files_with_filter, URLFileInfo, keep_latest_files
 from webdav_manager import WebdavManager
 
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# 创建logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+log_path = 'logs/twitter_helper.log'
+
+os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
+handler = RotatingFileHandler(
+    log_path,
+    maxBytes=10*1024*1024,
+    backupCount=2
+)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
+
 
 
 class TwitterTask:

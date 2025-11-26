@@ -1,5 +1,6 @@
 import fnmatch
 import json
+import logging
 import mimetypes
 import os
 from datetime import datetime
@@ -7,6 +8,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Callable
 from urllib.parse import urlparse, unquote, parse_qs
 
+logger = logging.getLogger(__name__)
 
 def get_nested_value_expr(data, expressions, default=None):
     """
@@ -146,7 +148,7 @@ def extract_twitter_graphql_params(url: str) -> Dict[str, Any]:
         try:
             result['variables'] = json.loads(query_params['variables'][0])
         except json.JSONDecodeError as e:
-            print(f"解析variables失败: {e}")
+            logging.error(f"解析variables失败: {e}")
             result['variables'] = query_params['variables'][0]
 
     # 解析features参数
@@ -154,7 +156,7 @@ def extract_twitter_graphql_params(url: str) -> Dict[str, Any]:
         try:
             result['features'] = json.loads(query_params['features'][0])
         except json.JSONDecodeError as e:
-            print(f"解析features失败: {e}")
+            logging.error(f"解析features失败: {e}")
             result['features'] = query_params['features'][0]
 
     # 解析fieldToggles参数
@@ -162,7 +164,7 @@ def extract_twitter_graphql_params(url: str) -> Dict[str, Any]:
         try:
             result['fieldToggles'] = json.loads(query_params['fieldToggles'][0])
         except json.JSONDecodeError as e:
-            print(f"解析fieldToggles失败: {e}")
+            logging.error(f"解析fieldToggles失败: {e}")
             result['fieldToggles'] = query_params['fieldToggles'][0]
 
     # 提取endpoint信息
@@ -246,7 +248,7 @@ def keep_latest_files(
 
     # 检查文件夹是否存在
     if not os.path.exists(folder_path):
-        print(f"错误：文件夹 '{folder_path}' 不存在")
+        logging.error(f"错误：文件夹 '{folder_path}' 不存在")
         return
 
     # 获取文件夹中的所有文件
@@ -260,14 +262,14 @@ def keep_latest_files(
                 files.append(item_path)
 
     if not files:
-        print("文件夹中没有找到文件")
+        logging.info("文件夹中没有找到文件")
         return
 
-    print(f"找到 {len(files)} 个文件，将保留最新的 {keep_count} 个文件")
+    logging.info(f"找到 {len(files)} 个文件，将保留最新的 {keep_count} 个文件")
 
     # 如果文件数量不超过保留数量，不需要删除
     if len(files) <= keep_count:
-        print(f"文件数量 ({len(files)}) 未超过保留数量 ({keep_count})，无需删除")
+        logging.info(f"文件数量 ({len(files)}) 未超过保留数量 ({keep_count})，无需删除")
         return
 
     # 按创建时间排序（从早到晚）
@@ -278,37 +280,37 @@ def keep_latest_files(
     files_to_delete = files[:num_to_delete]  # 最早的文件
     files_to_keep = files[num_to_delete:]  # 要保留的文件
 
-    print("\n" + "=" * 70)
-    print("将要删除的文件（最早创建的）：")
-    print("-" * 70)
+    logging.info("\n" + "=" * 70)
+    logging.info("将要删除的文件（最早创建的）：")
+    logging.info("-" * 70)
 
     # 显示将要删除的文件信息
     for i, file_path in enumerate(files_to_delete):
         create_time = os.path.getctime(file_path)
         create_time_str = datetime.fromtimestamp(create_time).strftime('%Y-%m-%d %H:%M:%S')
         file_size = os.path.getsize(file_path)
-        print(f"{i + 1:2d}. {create_time_str} | {file_size:8d} 字节 | {os.path.basename(file_path)}")
+        logging.info(f"{i + 1:2d}. {create_time_str} | {file_size:8d} 字节 | {os.path.basename(file_path)}")
 
-    print("\n将要保留的文件（最新创建的）：")
-    print("-" * 70)
+    logging.info("\n将要保留的文件（最新创建的）：")
+    logging.info("-" * 70)
 
     # 显示将要保留的文件信息
     for i, file_path in enumerate(files_to_keep):
         create_time = os.path.getctime(file_path)
         create_time_str = datetime.fromtimestamp(create_time).strftime('%Y-%m-%d %H:%M:%S')
         file_size = os.path.getsize(file_path)
-        print(f"{i + 1:2d}. {create_time_str} | {file_size:8d} 字节 | {os.path.basename(file_path)}")
+        logging.info(f"{i + 1:2d}. {create_time_str} | {file_size:8d} 字节 | {os.path.basename(file_path)}")
 
     # 如果是模拟运行，不实际删除
     if dry_run:
-        print(f"\n[模拟运行] 将删除 {num_to_delete} 个文件，保留 {keep_count} 个文件")
+        logging.info(f"\n[模拟运行] 将删除 {num_to_delete} 个文件，保留 {keep_count} 个文件")
         return
 
     # 确认删除
     if confirm_input:
         confirm = input(f"\n确定要删除 {num_to_delete} 个文件，保留最新的 {keep_count} 个文件吗？(y/N): ")
         if confirm.lower() != 'y':
-            print("操作已取消")
+            logging.info("操作已取消")
             return
 
     # 执行删除
@@ -316,9 +318,9 @@ def keep_latest_files(
     for file_path in files_to_delete:
         try:
             os.remove(file_path)
-            print(f"已删除: {os.path.basename(file_path)}")
+            logging.info(f"已删除: {os.path.basename(file_path)}")
             deleted_count += 1
         except Exception as e:
-            print(f"删除失败 {os.path.basename(file_path)}: {e}")
+            logging.error(f"删除失败 {os.path.basename(file_path)}: {e}")
 
-    print(f"\n成功删除 {deleted_count} 个文件，保留了 {keep_count} 个最新文件")
+    logging.info(f"\n成功删除 {deleted_count} 个文件，保留了 {keep_count} 个最新文件")
